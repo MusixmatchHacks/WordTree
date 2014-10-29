@@ -90,10 +90,22 @@ function getLyrics(track)
 		getJSON(lyrics_URI).then(function(response)
 		{
 			// console.log(response)
-			trackWithLyrics = {}
-			trackWithLyrics['lyrics'] = response.message["body"].lyrics.lyrics_body
-			trackWithLyrics['track'] = track.track
-			resolve(trackWithLyrics)
+			if(response.message.header.status_code == 200)
+			{
+				trackWithLyrics = {}
+				trackWithLyrics['lyrics'] = response.message["body"].lyrics.lyrics_body
+				trackWithLyrics['track'] = track.track
+				resolve(trackWithLyrics)
+			}
+			else
+			{
+				console.log('Lyrics not found: Track.id - ' + track.track.track_id )
+				trackWithLyrics = {}
+				trackWithLyrics['lyrics'] = ''
+				trackWithLyrics['track'] = track.track
+
+				resolve(trackWithLyrics)
+			}
 		});
 	})
 		//console.log(url)
@@ -186,16 +198,18 @@ function getTracksFromAlbum_Mbid(album_mbid)
 		{
 			if(response.message.header.status_code == 200)
 			{
-				Promise.all(response.message["body"].track_list.map(getLyrics)).then(function(res)
+				Promise.some(response.message["body"].track_list.map(getLyrics), response.message["body"].track_list.length).then(function(res)
 				{
 					// console.log(res)
 					resolve(res)
-				})
+				}).error(function(e){console.log(e)})
 			}
 			else
 			{
 				console.log("album tracks NOT FOUND " + album_mbid)
-				reject("album tracks not found")	
+				album = []
+				resolve(album)
+				// reject("album tracks not found")	
 			}
 			
 		})
@@ -216,15 +230,16 @@ function getArtistAlbumMbids(artist)
 				filterAlbums(musicbrainz_response["release-groups"]).then(function(releaseGrpsList)
 				{
 					// console.log(releaseGrpsList)
-					Promise.all(releaseGrpsList.map(getAlbumMbidsFromReleaseGroups)).then(function(result)
+					Promise.some(releaseGrpsList.map(getAlbumMbidsFromReleaseGroups), releaseGrpsList.length).then(function(result)
 					{
-						console.log(result)
-						Promise.some(result.map(getTracksFromAlbum_Mbid), result.length - 1).then(function(allAlbumLyrics)
+						// console.log(result)
+						Promise.some(result.map(getTracksFromAlbum_Mbid), result.length).then(function(allAlbumLyrics)
 						{
 							// console.log(allAlbumLyrics)
+							// console.log('here1')
 							resolve(allAlbumLyrics)
-						})
-					})
+						}).error(function(e){console.log(e)})
+					}).error(function(e){console.log(e)})
 				})
 			})
 		})
@@ -463,19 +478,95 @@ function getWordsAndMakePlaylist()
 	
 }
 
-function doAnalysis(allTracks)
+function songAnalysis(song)
 {
+	lyrics = song.lyrics.split('\n')
 	return new Promise(function(resolve,reject)
 	{
-		console.log(allTracks)
-		resolve('asd')
+
+		Promise.all(lyrics.map(sentimentPhrase)).then(function(songSentiments)
+		{
+			positiveScore = 0
+			negativeScore = 0
+			for (var k = 0; k < songSentiments.length; k++) 
+			{
+				
+				if(songSentiments[k]["type"] == "positive")
+				{
+					positiveScore = positiveScore + songSentiments[k]["score"]
+				}
+				if(songSentiments[k]["type"] == "negative")
+				{
+					negativeScore = negativeScore + songSentiments[k]["score"]
+				}
+			}
+			song["positiveScore"] = positiveScore
+			song["negativeScore"] = negativeScore
+			// console.log('here3')
+			resolve(song) 
+		})
 	})
 }
 
+function albumAnalysis(album)
+{
+ 	return new Promise(function(resolve,reject)
+ 	{
+ 		// console.log('here2')
+ 		Promise.all(album.map(songAnalysis)).then(function(albumSentiments)
+ 		{
+ 			resolve(albumSentiments)
+ 		})	
+ 	})
+}
+
+function doAnalysis(discography)
+{
+	return new Promise(function(resolve,reject)	
+	{	
+		// console.log('here1')
+		Promise.all(discography.map(albumAnalysis)).then(function(discographySentiments)
+		{
+			resolve(discographySentiments)
+		})
+	})
+}
+
+// function sentimentPhrase(phrase) 
+// {
+
+//     url = 'https://api.aylien.com/api/v1/sentiment'
+//     return new Promise(function(resolve,reject){
+//     	$.ajax(url, {
+//         	type: 'POST',
+//         	data: {
+//         		"text":phrase
+//         	},   	
+//         	headers: {
+//         		"Accept": "application/jsonp",
+//             	"Content-type":  "application/x-www-form-urlencoded",
+//       			"X-AYLIEN-TextAPI-Application-ID": Aylien_id,
+//       			"X-AYLIEN-TextAPI-Application-Key": Aylien_key
+//         	},
+//         	success: function(r) {
+//             	console.log(r)
+//             	resolve(r);
+//         	},
+//         	error: function(r) {
+//             	reject(null);
+//         	},
+//         	dataType: 'jsonp',
+//         	jsonp: "callback"
+//     	})
+//     })
+// }
+
+
+
 function sentimentPhrase(phrase) 
 {
-
-    url = 'https://api.aylien.com/api/v1/sentiment'
+	// console.log(phrase)
+	url = 'https://twinword-sentiment-analysis.p.mashape.com/analyze/'
     return new Promise(function(resolve,reject){
     	$.ajax(url, {
         	type: 'POST',
@@ -483,20 +574,31 @@ function sentimentPhrase(phrase)
         		"text":phrase
         	},   	
         	headers: {
-        		"Accept": "application/json",
             	"Content-type":  "application/x-www-form-urlencoded",
-      			"X-AYLIEN-TextAPI-Application-ID": Aylien_id,
-      			"X-AYLIEN-TextAPI-Application-Key": Aylien_key
+            	"X-Mashape-Key": "D9IepVrpHYmshbc9QdFqNHTEHf04p1liu0OjsnOISSYUb4QQBu"
         	},
-        	success: function(r) {
-            	console.log(r)
-            	resolve(r);
+        	
+        	success: function(r) 
+        	{
+        		r = JSON.parse(r)
+            	// console.log(typeof(r))
+            	sentiment = {}
+            	sentiment["type"] = r["type"]
+            	sentiment["score"] = r.score
+            	// console.log(sentiment)
+            	resolve(sentiment);
         	},
-        	error: function(r) {
-            	reject(null);
+        	error: function(r) 
+        	{
+        		sentiment = {}
+        		sentiment["type"] = 'error'
+        		sentiment["score"] = 0
+        		// console.log(sentiment)
+            	resolve(sentiment);
         	},
-        	dataType: 'jsonp',
-        	jsonp: "callback"
+        	
+        	// jsonp: "callback"
+        	// dataType: 'jsonp'
     	})
     })
 }
@@ -507,11 +609,33 @@ function removeDuplicates(discography)
 	{
 		// Things[i]
 		album = discography[i]
+		
+		if (album.length == 0)
+		{
+			discography.splice(i,1)
+			continue
+		}
+
 		for (var j = 0; j < album.length; j++) 
 		{
-				
+			trackName = album[j].track.track_name
+			for (var k = i+1 ; k < discography.length; k++) 
+			{
+				delAlbum = discography[k]
+				for (var l = 0; l < delAlbum.length; l++) 
+				{
+					// console.log(delAlbum[l])
+					if(trackName == delAlbum[l].track.track_name)
+					{
+						console.log(trackName)
+						console.log(discography[k][l])
+						discography[k].splice(l,1)
+					}
+				}
+			}	
 		}
 	}
+	return discography
 }
 
 $("#artist").keyup(function(event) {
@@ -524,9 +648,16 @@ $("#artist").keyup(function(event) {
         getArtistAlbumMbids(searchQuery.value).then(function(allTracks)
         {
         	console.log(allTracks)
-        	// sentimentPhrase('i love you')
+        	// sentimentPhrase("i don't want to be your friend i just want to be your lover")
+        	filteredDiscography = removeDuplicates(allTracks)
 
-
+        	// doAnalysis(filteredDiscography)
+        	// console.log(finalAlbumList)
+        	return(doAnalysis(filteredDiscography))
+        })
+        .then(function(discographySentiments)
+        {
+        	console.log(discographySentiments)
         })
     }
 });
