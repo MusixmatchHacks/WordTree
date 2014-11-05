@@ -79,6 +79,7 @@ function getJSON(url)
 function getLyrics(track) 
 {
 	var lyrics_URI = mxmAPI_base + 'track.lyrics.get?apikey=b463ed1270b71853d56be5bd776a9b4a&track_id=' + track.track.track_id + '&format=jsonp&callback=?'
+	// var lyrics_URI = mxmAPI_base + 'track.subtitles.get?apikey=b463ed1270b71853d56be5bd776a9b4a&track_id=' + track.track.track_id + '&subtitle_format=stledu'+'&format=jsonp&callback=?'
 	lyrics_URI = encodeURI(lyrics_URI)
 	// console.log(lyrics_URI)
 	//var get_promise = $.getJSON(lyrics_URI);
@@ -178,17 +179,24 @@ function getAlbumMbidsFromReleaseGroups(release_group_id)
 	{
 		getJSON(release_Uri).then(function(response)
 		{
-			resolve(response.releases[0]["id"])
+			console.log(response)
+			albumObj = {}
+			albumObj["id"] = response.releases[0]["id"]
+			albumObj["release_date"] = response["first-release-date"]
+			albumObj["title"] = response["title"]
+			// resolve(response.releases[0]["id"])
+			resolve(albumObj)
 		})
 	})
 }
 
-function getTracksFromAlbum_Mbid(album_mbid)
+// function getTracksFromAlbum_Mbid(album_mbid)
+function getTracksFromAlbum_Mbid(albumObj)
 {
 	// release_Uri = musicbrainz_base +'/release-group/'+ release_group_id + '?inc=releases&fmt=json'
 	// release_Uri = encodeURI(release_Uri)
 	// console.log(release_group_id)
-	var tracks_URI = mxmAPI_base + 'album.tracks.get?apikey=d8951a826384c648324e206c942b5cce&page=1&page_size=100&album_mbid=' + album_mbid + '&format=jsonp&callback=?'
+	var tracks_URI = mxmAPI_base + 'album.tracks.get?apikey=d8951a826384c648324e206c942b5cce&page=1&page_size=100&album_mbid=' + albumObj["id"] + '&format=jsonp&callback=?'
 	tracks_URI = encodeURI(tracks_URI)
 	trackObject = {}
 
@@ -201,6 +209,15 @@ function getTracksFromAlbum_Mbid(album_mbid)
 				Promise.some(response.message["body"].track_list.map(getLyrics), response.message["body"].track_list.length).then(function(res)
 				{
 					// console.log(res)
+					albumTracks = {}
+					for (var i = 0; i < res.length; i++) 
+					{
+						albumTracks["lyrics"] = res["lyrics"]
+						albumTracks["track"] = res["track"]
+						albumTracks["release_date"] = albumObj["release_date"]
+						albumTracks["id"] = albumObj["id"]
+						albumTracks["album_title"] = albumObj["title"]
+					}
 					resolve(res)
 				}).error(function(e){console.log(e)})
 			}
@@ -515,7 +532,18 @@ function albumAnalysis(album)
  		// console.log('here2')
  		Promise.all(album.map(songAnalysis)).then(function(albumSentiments)
  		{
- 			resolve(albumSentiments)
+ 			positiveAlbumScore = 0
+ 			negativeAlbumScore = 0
+ 			for (var i = 0; i < albumSentiments.length; i++) 
+ 			{
+ 				positiveAlbumScore = positiveAlbumScore + albumSentiments[i]["positiveScore"]
+ 				negativeAlbumScore = negativeAlbumScore + albumSentiments[i]["negativeScore"]
+ 			}
+ 			album = {}
+ 			album["tracks"] = albumSentiments
+ 			album["positiveScore"] = positiveAlbumScore
+ 			album["negativeScore"] = negativeAlbumScore
+ 			resolve(album)
  		})	
  	})
 }
@@ -532,6 +560,134 @@ function doAnalysis(discography)
 	})
 }
 
+
+var chart = new google.visualization.WordTree(document.getElementById('wordtree_basic'));
+function readyHandler() 
+{	
+		// console.log('asda')
+		// console.log('The user selected' + chart.getSelection());
+		console.log('asdzxczxc')
+		// google.visualization.events.addListener(chart, 'select', selectHandler)
+}
+
+// function selectHandler()
+// {
+// 	console.log('selection')
+// 	debugger
+// 	chart.getSelection()
+// }
+
+$("#wordtree_basic").click(function(event){
+    console.log('clicked')
+    console.log(chart.pE.Mk["label"])
+});
+
+function drawChart(lyricsPhrases) 
+{
+	// console.log(lyricsPhrases)
+	
+	dataArray = [['Phrases']]
+	// tempArr = new Array()
+	// tempArr.push(lyricsPhrases)
+	for (var i = 0; i < lyricsPhrases.length; i++) {
+		// Things[i]
+		
+		if (lyricsPhrases[i] != "")
+		{
+			tempArr = new Array()
+			tempArr.push(lyricsPhrases[i])
+			dataArray.push(tempArr)
+		}
+	};
+	console.log(dataArray.length)
+	// dataArray.push(lyricsPhrases)
+	console.log(dataArray)
+	var data = google.visualization.arrayToDataTable(dataArray)
+	// console.log(data)
+	
+	chart.draw(data, {'format': 'implicit', 'word': 'of', 'type': 'double'});
+	// console.log('asd')
+	// google.visualization.events.addListener(chart, 'select', selectHandler)
+	// console.log('asd')
+        // var data = google.visualization.arrayToDataTable(
+        //   [ ['Phrases'],
+        //     ['cats are better than dogs'],
+        //     ['A heart that is full up like a landfill'], 
+        //    ['A job that slowly kills you'], 
+        //    ['Bruises that won'], 
+        //    [''], 
+        //    ['You look so tired, unhappy'], 
+        //    ['Bring down the government'], 
+        //    ['They don, they don speak for us'], 
+        //    [''], 
+        //    ['Ill take a quiet life'], 
+        //    ['A handshake of carbon monoxide'], 
+        //    ['No alarms and no surprises'], 
+        //    ['No alarms and no surprises'], 
+        //    ['No alarms and no surprises'], 
+        //    ['Silent'],
+        //    ['Silent'], 
+        //    [''], 
+        //    ['This is my final fit'], 
+        //    ['My final bellyache with'], 
+        //    ['No alarms and no surprises'],
+        //    ['No alarms and no surprises'], 
+        //    ['No alarms and no surprises please'], 
+        //    [''], 
+        //    ['Such a pretty house'], 
+        //    ['And such a pretty garden'],
+        //    ['No alarms and no surprises'], 
+        //    ['No alarms and no surprises'], 
+        //    ['No alarms and no surprises please'], 
+        //    ['INSTRUMENTAL'], 
+        //    ["Don't forget that you are our son"], 
+        //    ['Now go back to bed'], 
+        //    [''], 
+        //    ["We just know that you'll do well"], 
+        //    ["You won't come to harm"], 
+        //    [''], 
+        //    ['Death to all who stand in your way'],
+        //    ['Wake my dear'], ["Dressed in Bishop's robes"], 
+        //    ['Terrifies me still'], 
+        //    ["In Bishop's robes"], 
+        //    ['Bastard headmaster'], 
+        //    [''], 
+        //    ['I am not going back'], 
+        //    ['I am not going back'], 
+        //    ['I am not going back'], 
+        //    [''], 
+        //    ['Children taught to kill'], 
+        //    ['To tear themselves to bits'],
+        //    ['On playing fields'], 
+        //    ["Dressed in Bishop's robes"], 
+        //    [''], 
+        //    ['I am not going back'], 
+        //    ['I am not going back'], 
+        //    ['I am not going back'], 
+        //    ['How do you get your teeth so pearly?'], 
+        //    ['Dewdrop dentures'], 
+        //    ['White-washed fences'], 
+        //    ['She runs from the third world pearly'], 
+        //    [''], 
+        //    ['Vanilla (feel it crawl to me)'], 
+        //    ['Milkshakes (crawl back again)'], 
+        //    ['From hard rock (whatever you say)'], 
+        //    ['Cafés (it wont go away)'], 
+        //    ['That is where (I feel it crawl to me)'], 
+        //    ['She got her (crawl back again)'], 
+        //    ['Sweet tooth (it will not go away)'], 
+        //    ['For white boys (whatever you say)'], 
+        //    [''],
+        //    ['She runs from the third world pearly'], [''], ['Hurts me'], ['Darling use me'], ['Darling use me'], ['Darling use me'], ['If I get old, I will not give in'], ['But if I do, remind me of this'], ['Remind me that'], ['Once I was free'], ['Once I was cool'], ['Once I was me'], [''], ['And if I sit down and cross my arms'], ['Hold me up to this song'], [''], ['Knock me out, smash out my brains'], ['If I take a chair, start to talk shit'], [''], ['If I get old, remind me of this'], ['That we kissed and I really meant it'], ['Whatever happens, if we are still speaking'], ['Pick up the phone, play me this song'], ['Open your mouth wide'], ['The universe will sigh'], ['And while the ocean blooms'], ['It is what keeps me alive'], ['So why does it still hurt?'], ['Do not blow your mind with whys'], [''], ['I am moving out of orbit'], ['(Turning in somersaults)'], ['Turning in somersaults'],
+        //   ]
+        // );
+
+        //var options = 
+          //wordtree: {
+            //format: 'implicit',
+            //word: 'it'
+          //}                
+}
 // function sentimentPhrase(phrase) 
 // {
 
@@ -597,8 +753,8 @@ function sentimentPhrase(phrase)
             	resolve(sentiment);
         	},
         	
-        	// jsonp: "callback"
-        	// dataType: 'jsonp'
+        	// jsonp: "callback",
+        	dataType: 'jsonp'
     	})
     })
 }
@@ -638,6 +794,36 @@ function removeDuplicates(discography)
 	return discography
 }
 
+
+function lyricsForWordTree(discography)
+{
+	allPhrases = new Array()
+	// allPhrases = ''
+	for (var i = 0; i < discography.length; i++) 
+	{
+		album = discography[i]
+		for (var j = 0; j < album.length; j++) 
+		{
+			// console.log(album[])
+			song = album[j]["lyrics"].split('\n')
+			// allPhrases = allPhrases + song + '\n'
+			// console.log(song)
+			for (var k = 0; k < song.length; k++) 
+			{
+				// allPhrases = allPhrases + song[k] + '.'
+				// phrase = new Array()
+				// phrase.push(song[k])
+				// phrase = ''
+				// phrase = "['"  + song[k] + "']"
+				// phrase = song[k] 
+				// allPhrases = allPhrases 
+				allPhrases.push(song[k])
+			}
+		}
+	}
+	return(allPhrases)
+}
+
 $("#artist").keyup(function(event) {
     if (event.keyCode == 13) 
     {
@@ -647,38 +833,43 @@ $("#artist").keyup(function(event) {
         // document.getElementById("progress").style.display = "none"
         getArtistAlbumMbids(searchQuery.value).then(function(allTracks)
         {
-        	console.log(allTracks)
+        	// console.log(allTracks)
         	// sentimentPhrase("i don't want to be your friend i just want to be your lover")
         	filteredDiscography = removeDuplicates(allTracks)
 
         	// doAnalysis(filteredDiscography)
         	// console.log(finalAlbumList)
-        	return(doAnalysis(filteredDiscography))
+        	// return(doAnalysis(filteredDiscography))
+        	return(lyricsForWordTree(filteredDiscography))
         })
-        .then(function(discographySentiments)
+        .then(function(phrases)
         {
-        	console.log(discographySentiments)
+        	// console.log(discographySentiments)
+        	google.visualization.events.addListener(chart, 'ready', readyHandler)
+        	drawChart(phrases)
+
         })
+		
     }
 });
 
-MakePlaylist.onclick = function(e){
+// MakePlaylist.onclick = function(e){
 	
-	$('#SpotifyWidget').empty()
-	document.getElementById("SpotifySave").style.display = "none"
-	document.getElementById("makePlaylist").style.display = "none"
-	document.getElementById("status").style.display = "inline-block"
-	$("#status").text("Searching your vocabulary in this language")
-	getUsernameAndLanguage().then(function()
-	{
-		getWordsAndMakePlaylist();	
-	});
+// 	$('#SpotifyWidget').empty()
+// 	document.getElementById("SpotifySave").style.display = "none"
+// 	document.getElementById("makePlaylist").style.display = "none"
+// 	document.getElementById("status").style.display = "inline-block"
+// 	$("#status").text("Searching your vocabulary in this language")
+// 	getUsernameAndLanguage().then(function()
+// 	{
+// 		getWordsAndMakePlaylist();	
+// 	});
 	
-}
+// }
 
-SpotifySave.onclick = function(e){
-  loginWithSpotify()
-}
+// SpotifySave.onclick = function(e){
+//   loginWithSpotify()
+// }
 
 
 // GetImages.onclick = function(e){

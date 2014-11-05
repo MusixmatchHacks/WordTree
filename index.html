@@ -18,9 +18,11 @@
 </style>
 <script src = "scripts/savePlaylist.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-<script src="https://code.jquery.com/ui/1.11.1/jquery-ui.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.1/jquery-ui.min.js"></script>
+<script type="text/javascript" src="https://www.google.com/jsapi?autoload={'modules':[{'name':'visualization','version':'1.0','packages':['wordtree']}]}"></script>
+<!-- <script type="text/javascript" src="https://www.google.com/jsapi"></script> -->
 
-<script src="http://cdnjs.cloudflare.com/ajax/libs/jquery-backstretch/2.0.4/jquery.backstretch.min.js"></script>
+<!-- <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery-backstretch/2.0.4/jquery.backstretch.min.js"></script> -->
 <script type="text/javascript" src="scripts/bluebird.js"></script>
 <link rel="stylesheet" href="bootstrap-multiselect/css/bootstrap-3.2.0.min.css" type="text/css"/>
 <script type="text/javascript" src="bootstrap-multiselect/js/bootstrap-3.2.0.min.js"></script>
@@ -60,24 +62,25 @@ padding-top: 5px; font-size:16px;">About</a>
 	 		 	<!-- <h1>Polyglottis: Musixmatch + Duolingo</h1> -->
 	 		 	<!-- <h2>Playlists for learning foreign languages, with lyrics containing words from your Duolingo vocabulary</h2> -->
 	 		 <!-- </div> -->
+ 		 
  		 </header>
-		<div class = "mainForm">
-		    <p >
-		      <!-- <span class="copy">My Duolingo username is </span> -->
-		      <!-- <span class="inputcontainer"><input class="textinput" name="name" id="username" value="" placeholder="username"></span>  -->
-		      <span class="inputcontainer"><input class="textinput" name="name" id="artist" value="" style="height: 45px;text-align: center;width: 230px;" placeholder = "artist">
-		      </span>
-		      <!-- <span class="copy">.</span> -->
-		      <!-- <br />		 -->
-		     <!-- <span class="copy" style="margin-top: 10px;display: inline-block;"> And I like </span> -->
-		      <!-- <select  id="genre" class="dropdown" ></select> -->
-		      <!-- <br /> -->
-		      <!-- <select id = "genre" class="form-control" name="genre" multiple> </select> -->
-		      <!-- <span class="copy"> music.</span> -->
-		 	</p>
-		 </div>
-		 
-		<button class="button" id = "makePlaylist" >Do stuff</button>
+		
+		 <div class = "mainForm">
+ 		     <p >
+ 		       <!-- <span class="copy">My Duolingo username is </span> -->
+ 		       <!-- <span class="inputcontainer"><input class="textinput" name="name" id="username" value="" placeholder="username"></span>  -->
+ 		       <span class="inputcontainer"><input class="textinput" name="name" id="artist" value="" style="height: 45px;text-align: center;width: 230px;" placeholder = "artist">
+ 		       </span>
+ 		       <!-- <span class="copy">.</span> -->
+ 		       <!-- <br />		 -->
+ 		      <!-- <span class="copy" style="margin-top: 10px;display: inline-block;"> And I like </span> -->
+ 		       <!-- <select  id="genre" class="dropdown" ></select> -->
+ 		       <!-- <br /> -->
+ 		       <!-- <select id = "genre" class="form-control" name="genre" multiple> </select> -->
+ 		       <!-- <span class="copy"> music.</span> -->
+ 		  	</p>
+ 		  </div>
+		<!-- <button class="button" id = "makePlaylist" >Do stuff</button> -->
  		
  		<!-- <div id = 'genreHolder' style = "display:none"><p id = 'genreText'> Select genre/s:</p></div> -->
 
@@ -87,12 +90,13 @@ padding-top: 5px; font-size:16px;">About</a>
  		
 
 		<!-- <div id = "progress" style = "display:none" ><img src = 'ajax-loader.gif'> </div> -->
-		<div style="text-align: center;"> <div id = "SpotifyWidget" > </div> <button type="button" value="Save This Playlist To Spotify" id="SpotifySave" style="display: none;">SAVE THIS PLAYLIST TO SPOTIFY</button></div>
+		<!-- <div style="text-align: center;"> <div id = "SpotifyWidget" > </div> <button type="button" value="Save This Playlist To Spotify" id="SpotifySave" style="display: none;">SAVE THIS PLAYLIST TO SPOTIFY</button></div> -->
 		<div >
+		<div id="wordtree_basic" style=""></div>
 		
 		<!-- <div id = "metadata" style = "display:none"></div> -->
  		<!-- <div> <button type="button" value="Save This Playlist To Spotify" id = "SpotifySave" style = "display:none"> </div></div> -->
- 		<footer style="text-align: center;"><div id = "status" style = "display:none"></div></footer>
+ 		<!-- <footer style="text-align: center;"><div id = "status" style = "display:none"></div></footer> -->
 </body>
 
 <script src="scripts/stopwords.js"></script>
