@@ -78,8 +78,8 @@ function getJSON(url)
 
 function getLyrics(track) 
 {
-	var lyrics_URI = mxmAPI_base + 'track.lyrics.get?apikey=b463ed1270b71853d56be5bd776a9b4a&track_id=' + track.track.track_id + '&format=jsonp&callback=?'
-	// var lyrics_URI = mxmAPI_base + 'track.subtitles.get?apikey=b463ed1270b71853d56be5bd776a9b4a&track_id=' + track.track.track_id + '&subtitle_format=stledu'+'&format=jsonp&callback=?'
+	// var lyrics_URI = mxmAPI_base + 'track.lyrics.get?apikey=b463ed1270b71853d56be5bd776a9b4a&track_id=' + track.track.track_id + '&format=jsonp&callback=?'
+	var lyrics_URI = mxmAPI_base + 'track.subtitles.get?apikey=b463ed1270b71853d56be5bd776a9b4a&track_id=' + track.track.track_id + '&subtitle_format=mxm'+'&format=jsonp&callback=?'
 	lyrics_URI = encodeURI(lyrics_URI)
 	// console.log(lyrics_URI)
 	//var get_promise = $.getJSON(lyrics_URI);
@@ -94,13 +94,14 @@ function getLyrics(track)
 			if(response.message.header.status_code == 200)
 			{
 				trackWithLyrics = {}
-				trackWithLyrics['lyrics'] = response.message["body"].lyrics.lyrics_body
+				trackWithLyrics['subtitles'] = JSON.parse(response.message["body"]["subtitle_list"][0].subtitle.subtitle_body)
+				// console.log(trackWithLyrics['subtitles'])
 				trackWithLyrics['track'] = track.track
 				resolve(trackWithLyrics)
 			}
 			else
 			{
-				console.log('Lyrics not found: Track.id - ' + track.track.track_id )
+				console.log('Subtitles not found: Track.id - ' + track.track.track_id )
 				trackWithLyrics = {}
 				trackWithLyrics['lyrics'] = ''
 				trackWithLyrics['track'] = track.track
@@ -179,7 +180,7 @@ function getAlbumMbidsFromReleaseGroups(release_group_id)
 	{
 		getJSON(release_Uri).then(function(response)
 		{
-			console.log(response)
+			// console.log(response)
 			albumObj = {}
 			albumObj["id"] = response.releases[0]["id"]
 			albumObj["release_date"] = response["first-release-date"]
@@ -209,16 +210,28 @@ function getTracksFromAlbum_Mbid(albumObj)
 				Promise.some(response.message["body"].track_list.map(getLyrics), response.message["body"].track_list.length).then(function(res)
 				{
 					// console.log(res)
-					albumTracks = {}
+					
+					album = new Array()
 					for (var i = 0; i < res.length; i++) 
 					{
-						albumTracks["lyrics"] = res["lyrics"]
-						albumTracks["track"] = res["track"]
+						albumTracks = {}
+						albumTracks["subtitles"] = res[i]["subtitles"] //new Array()
+						// subs = JSON.parse(res[i]["subtitles"])
+						// console.log(subs)
+						// for (var j = 0; j < subs.length; j++) 
+						// {
+						// 	// console.log(JSON.parse(JSON.stringify(subs[j])))
+						// 	albumTracks["subtitles"].push(JSON.parse(JSON.stringify(subs[j])))
+						// }
+						//  //JSON.parse(JSON.stringify(res[i]["subtitles"]))
+						// console.log(albumTracks["subtitles"])
+						albumTracks["track"] = res[i]["track"]
 						albumTracks["release_date"] = albumObj["release_date"]
 						albumTracks["id"] = albumObj["id"]
 						albumTracks["album_title"] = albumObj["title"]
+						album.push(albumTracks)
 					}
-					resolve(res)
+					resolve(album)
 				}).error(function(e){console.log(e)})
 			}
 			else
@@ -601,121 +614,13 @@ function drawChart(lyricsPhrases)
 	};
 	console.log(dataArray.length)
 	// dataArray.push(lyricsPhrases)
-	console.log(dataArray)
+	// console.log(dataArray)
 	var data = google.visualization.arrayToDataTable(dataArray)
 	// console.log(data)
 	
 	chart.draw(data, {'format': 'implicit', 'word': 'of', 'type': 'double'});
-	// console.log('asd')
-	// google.visualization.events.addListener(chart, 'select', selectHandler)
-	// console.log('asd')
-        // var data = google.visualization.arrayToDataTable(
-        //   [ ['Phrases'],
-        //     ['cats are better than dogs'],
-        //     ['A heart that is full up like a landfill'], 
-        //    ['A job that slowly kills you'], 
-        //    ['Bruises that won'], 
-        //    [''], 
-        //    ['You look so tired, unhappy'], 
-        //    ['Bring down the government'], 
-        //    ['They don, they don speak for us'], 
-        //    [''], 
-        //    ['Ill take a quiet life'], 
-        //    ['A handshake of carbon monoxide'], 
-        //    ['No alarms and no surprises'], 
-        //    ['No alarms and no surprises'], 
-        //    ['No alarms and no surprises'], 
-        //    ['Silent'],
-        //    ['Silent'], 
-        //    [''], 
-        //    ['This is my final fit'], 
-        //    ['My final bellyache with'], 
-        //    ['No alarms and no surprises'],
-        //    ['No alarms and no surprises'], 
-        //    ['No alarms and no surprises please'], 
-        //    [''], 
-        //    ['Such a pretty house'], 
-        //    ['And such a pretty garden'],
-        //    ['No alarms and no surprises'], 
-        //    ['No alarms and no surprises'], 
-        //    ['No alarms and no surprises please'], 
-        //    ['INSTRUMENTAL'], 
-        //    ["Don't forget that you are our son"], 
-        //    ['Now go back to bed'], 
-        //    [''], 
-        //    ["We just know that you'll do well"], 
-        //    ["You won't come to harm"], 
-        //    [''], 
-        //    ['Death to all who stand in your way'],
-        //    ['Wake my dear'], ["Dressed in Bishop's robes"], 
-        //    ['Terrifies me still'], 
-        //    ["In Bishop's robes"], 
-        //    ['Bastard headmaster'], 
-        //    [''], 
-        //    ['I am not going back'], 
-        //    ['I am not going back'], 
-        //    ['I am not going back'], 
-        //    [''], 
-        //    ['Children taught to kill'], 
-        //    ['To tear themselves to bits'],
-        //    ['On playing fields'], 
-        //    ["Dressed in Bishop's robes"], 
-        //    [''], 
-        //    ['I am not going back'], 
-        //    ['I am not going back'], 
-        //    ['I am not going back'], 
-        //    ['How do you get your teeth so pearly?'], 
-        //    ['Dewdrop dentures'], 
-        //    ['White-washed fences'], 
-        //    ['She runs from the third world pearly'], 
-        //    [''], 
-        //    ['Vanilla (feel it crawl to me)'], 
-        //    ['Milkshakes (crawl back again)'], 
-        //    ['From hard rock (whatever you say)'], 
-        //    ['Cafés (it wont go away)'], 
-        //    ['That is where (I feel it crawl to me)'], 
-        //    ['She got her (crawl back again)'], 
-        //    ['Sweet tooth (it will not go away)'], 
-        //    ['For white boys (whatever you say)'], 
-        //    [''],
-        //    ['She runs from the third world pearly'], [''], ['Hurts me'], ['Darling use me'], ['Darling use me'], ['Darling use me'], ['If I get old, I will not give in'], ['But if I do, remind me of this'], ['Remind me that'], ['Once I was free'], ['Once I was cool'], ['Once I was me'], [''], ['And if I sit down and cross my arms'], ['Hold me up to this song'], [''], ['Knock me out, smash out my brains'], ['If I take a chair, start to talk shit'], [''], ['If I get old, remind me of this'], ['That we kissed and I really meant it'], ['Whatever happens, if we are still speaking'], ['Pick up the phone, play me this song'], ['Open your mouth wide'], ['The universe will sigh'], ['And while the ocean blooms'], ['It is what keeps me alive'], ['So why does it still hurt?'], ['Do not blow your mind with whys'], [''], ['I am moving out of orbit'], ['(Turning in somersaults)'], ['Turning in somersaults'],
-        //   ]
-        // );
-
-        //var options = 
-          //wordtree: {
-            //format: 'implicit',
-            //word: 'it'
-          //}                
+	
 }
-// function sentimentPhrase(phrase) 
-// {
-
-//     url = 'https://api.aylien.com/api/v1/sentiment'
-//     return new Promise(function(resolve,reject){
-//     	$.ajax(url, {
-//         	type: 'POST',
-//         	data: {
-//         		"text":phrase
-//         	},   	
-//         	headers: {
-//         		"Accept": "application/jsonp",
-//             	"Content-type":  "application/x-www-form-urlencoded",
-//       			"X-AYLIEN-TextAPI-Application-ID": Aylien_id,
-//       			"X-AYLIEN-TextAPI-Application-Key": Aylien_key
-//         	},
-//         	success: function(r) {
-//             	console.log(r)
-//             	resolve(r);
-//         	},
-//         	error: function(r) {
-//             	reject(null);
-//         	},
-//         	dataType: 'jsonp',
-//         	jsonp: "callback"
-//     	})
-//     })
-// }
 
 
 
@@ -805,7 +710,10 @@ function lyricsForWordTree(discography)
 		for (var j = 0; j < album.length; j++) 
 		{
 			// console.log(album[])
-			song = album[j]["lyrics"].split('\n')
+			song = album[j]["subtitles"] //.split('\n')
+			// console.log(album[j]["album_title"])
+			// console.log(album[j]["subtitles"])
+
 			// allPhrases = allPhrases + song + '\n'
 			// console.log(song)
 			for (var k = 0; k < song.length; k++) 
@@ -817,7 +725,8 @@ function lyricsForWordTree(discography)
 				// phrase = "['"  + song[k] + "']"
 				// phrase = song[k] 
 				// allPhrases = allPhrases 
-				allPhrases.push(song[k])
+				// console.log(typeof(song[k]))
+				allPhrases.push(song[k]["text"])
 			}
 		}
 	}
@@ -840,6 +749,7 @@ $("#artist").keyup(function(event) {
         	// doAnalysis(filteredDiscography)
         	// console.log(finalAlbumList)
         	// return(doAnalysis(filteredDiscography))
+        	console.log(filteredDiscography)
         	return(lyricsForWordTree(filteredDiscography))
         })
         .then(function(phrases)
@@ -852,6 +762,35 @@ $("#artist").keyup(function(event) {
 		
     }
 });
+
+// function sentimentPhrase(phrase) 
+// {
+
+//     url = 'https://api.aylien.com/api/v1/sentiment'
+//     return new Promise(function(resolve,reject){
+//     	$.ajax(url, {
+//         	type: 'POST',
+//         	data: {
+//         		"text":phrase
+//         	},   	
+//         	headers: {
+//         		"Accept": "application/jsonp",
+//             	"Content-type":  "application/x-www-form-urlencoded",
+//       			"X-AYLIEN-TextAPI-Application-ID": Aylien_id,
+//       			"X-AYLIEN-TextAPI-Application-Key": Aylien_key
+//         	},
+//         	success: function(r) {
+//             	console.log(r)
+//             	resolve(r);
+//         	},
+//         	error: function(r) {
+//             	reject(null);
+//         	},
+//         	dataType: 'jsonp',
+//         	jsonp: "callback"
+//     	})
+//     })
+// }
 
 // MakePlaylist.onclick = function(e){
 	
@@ -883,3 +822,85 @@ $("#artist").keyup(function(event) {
 // SpotifySave.onclick = function(e){
 //   loginWithSpotify()
 // }
+
+// console.log('asd')
+	// google.visualization.events.addListener(chart, 'select', selectHandler)
+	// console.log('asd')
+        // var data = google.visualization.arrayToDataTable(
+        //   [ ['Phrases'],
+        //     ['cats are better than dogs'],
+        //     ['A heart that is full up like a landfill'], 
+        //    ['A job that slowly kills you'], 
+        //    ['Bruises that won'], 
+        //    [''], 
+        //    ['You look so tired, unhappy'], 
+        //    ['Bring down the government'], 
+        //    ['They don, they don speak for us'], 
+        //    [''], 
+        //    ['Ill take a quiet life'], 
+        //    ['A handshake of carbon monoxide'], 
+        //    ['No alarms and no surprises'], 
+        //    ['No alarms and no surprises'], 
+        //    ['No alarms and no surprises'], 
+        //    ['Silent'],
+        //    ['Silent'], 
+        //    [''], 
+        //    ['This is my final fit'], 
+        //    ['My final bellyache with'], 
+        //    ['No alarms and no surprises'],
+        //    ['No alarms and no surprises'], 
+        //    ['No alarms and no surprises please'], 
+        //    [''], 
+        //    ['Such a pretty house'], 
+        //    ['And such a pretty garden'],
+        //    ['No alarms and no surprises'], 
+        //    ['No alarms and no surprises'], 
+        //    ['No alarms and no surprises please'], 
+        //    ['INSTRUMENTAL'], 
+        //    ["Don't forget that you are our son"], 
+        //    ['Now go back to bed'], 
+        //    [''], 
+        //    ["We just know that you'll do well"], 
+        //    ["You won't come to harm"], 
+        //    [''], 
+        //    ['Death to all who stand in your way'],
+        //    ['Wake my dear'], ["Dressed in Bishop's robes"], 
+        //    ['Terrifies me still'], 
+        //    ["In Bishop's robes"], 
+        //    ['Bastard headmaster'], 
+        //    [''], 
+        //    ['I am not going back'], 
+        //    ['I am not going back'], 
+        //    ['I am not going back'], 
+        //    [''], 
+        //    ['Children taught to kill'], 
+        //    ['To tear themselves to bits'],
+        //    ['On playing fields'], 
+        //    ["Dressed in Bishop's robes"], 
+        //    [''], 
+        //    ['I am not going back'], 
+        //    ['I am not going back'], 
+        //    ['I am not going back'], 
+        //    ['How do you get your teeth so pearly?'], 
+        //    ['Dewdrop dentures'], 
+        //    ['White-washed fences'], 
+        //    ['She runs from the third world pearly'], 
+        //    [''], 
+        //    ['Vanilla (feel it crawl to me)'], 
+        //    ['Milkshakes (crawl back again)'], 
+        //    ['From hard rock (whatever you say)'], 
+        //    ['Cafés (it wont go away)'], 
+        //    ['That is where (I feel it crawl to me)'], 
+        //    ['She got her (crawl back again)'], 
+        //    ['Sweet tooth (it will not go away)'], 
+        //    ['For white boys (whatever you say)'], 
+        //    [''],
+        //    ['She runs from the third world pearly'], [''], ['Hurts me'], ['Darling use me'], ['Darling use me'], ['Darling use me'], ['If I get old, I will not give in'], ['But if I do, remind me of this'], ['Remind me that'], ['Once I was free'], ['Once I was cool'], ['Once I was me'], [''], ['And if I sit down and cross my arms'], ['Hold me up to this song'], [''], ['Knock me out, smash out my brains'], ['If I take a chair, start to talk shit'], [''], ['If I get old, remind me of this'], ['That we kissed and I really meant it'], ['Whatever happens, if we are still speaking'], ['Pick up the phone, play me this song'], ['Open your mouth wide'], ['The universe will sigh'], ['And while the ocean blooms'], ['It is what keeps me alive'], ['So why does it still hurt?'], ['Do not blow your mind with whys'], [''], ['I am moving out of orbit'], ['(Turning in somersaults)'], ['Turning in somersaults'],
+        //   ]
+        // );
+
+        //var options = 
+          //wordtree: {
+            //format: 'implicit',
+            //word: 'it'
+          //}                
