@@ -91,7 +91,7 @@ function getLyrics(track)
 		getJSON(lyrics_URI).then(function(response)
 		{
 			// console.log(response)
-			if(response.message.header.status_code == 200)
+			if(response.message.header.status_code == 200 && response.message["body"].length != 0) 
 			{
 				trackWithLyrics = {}
 				trackWithLyrics['subtitles'] = JSON.parse(response.message["body"]["subtitle_list"][0].subtitle.subtitle_body)
@@ -103,7 +103,7 @@ function getLyrics(track)
 			{
 				console.log('Subtitles not found: Track.id - ' + track.track.track_id )
 				trackWithLyrics = {}
-				trackWithLyrics['lyrics'] = ''
+				trackWithLyrics['subtitles'] = ''
 				trackWithLyrics['track'] = track.track
 
 				resolve(trackWithLyrics)
@@ -618,7 +618,7 @@ function drawChart(lyricsPhrases)
 	var data = google.visualization.arrayToDataTable(dataArray)
 	// console.log(data)
 	
-	chart.draw(data, {'format': 'implicit', 'word': 'of', 'type': 'double'});
+	chart.draw(data, {wordtree: {'format': 'implicit', 'word': 'of', 'type': 'double'}});
 	
 }
 
@@ -709,6 +709,7 @@ function lyricsForWordTree(discography)
 		album = discography[i]
 		for (var j = 0; j < album.length; j++) 
 		{
+
 			// console.log(album[])
 			song = album[j]["subtitles"] //.split('\n')
 			// console.log(album[j]["album_title"])
